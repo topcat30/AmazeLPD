@@ -11,7 +11,7 @@
 [![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-blue.svg)](https://github.com/traviscitrine/AmazeLPD/releases)
 [![.NET Framework](https://img.shields.io/badge/.NET-Framework%204.8-purple.svg)](https://github.com/traviscitrine/AmazeLPD/releases)
-[![Buy on Gumroad](https://img.shields.io/badge/Buy-Gumroad-ff69b4.svg)](https://gumroad.com)
+[![Buy on Gumroad](https://img.shields.io/badge/Buy-Gumroad-ff69b4.svg)](mobitech7.gumroad.com/l/awtuic)
 
 [**Download Trial**](#download) · [**Documentation**](docs/README.md) · [**Buy a Licence**](#pricing) · [**Getting Started**](#quick-start)
 
