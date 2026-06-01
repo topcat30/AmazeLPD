@@ -253,7 +253,7 @@ AmazeLPD is proprietary software. See [LICENSE](LICENSE) for full terms.
 
 <div align="center">
 
-**[Download Trial](https://github.com/traviscitrine/AmazeLPD/releases) · [Buy a Licence](https://gumroad.com) · [Documentation](docs/README.md)**
+**[Download Trial](mobitech7.gumroad.com/l/awtuic) · [Buy a Licence](mobitech7.gumroad.com/l/awtuic) · [Documentation](docs/README.md)**
 
 *Solving the Microsoft LPD deprecation problem — one print queue at a time.*
 
