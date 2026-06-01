@@ -85,13 +85,13 @@ lpr -S <your-server-ip> -P MYQUEUE "C:\test.pdf"
 <div align="center">
 
 ### Queue Manager
-![Queue Manager]("Amaze Manager.png")
+![Queue Manager](AmazeManager.png)
 
 ### Job History
 ![Job History](Jobs.png)
 
 ### Queue Configuration
-![Queue Config]("queue config.png")
+![Queue Config](queueconfig.png)
 
 </div>
 
