@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/logo.png" alt="AmazeLPD Logo" width="120"/>
+<img src="docs/logo.png" alt="AmazeLPD_logo.png" width="120"/>
 
 # AmazeLPD
 
