@@ -247,7 +247,7 @@ For pre-sales questions or licensing enquiries, open a [GitHub Issue](https://gi
 
 AmazeLPD is proprietary software. See [LICENSE](LICENSE) for full terms.
 
-© 2026 Travis Citrine. All rights reserved.
+© 2026 Heath Citrine. All rights reserved.
 
 ---
 
