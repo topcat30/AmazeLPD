@@ -3,10 +3,9 @@
 <img src="AmazeLPD_logo.png" alt="AmazeLPD_logo.png" width="120"/>
 
 # AmazeLPD
+### LPD/LPR & IPP Print Gateway for Windows
 
-### LPD/LPR Print Gateway for Windows
-
-**Receive print jobs from AS400, Linux, Unix, SAP, and mainframe — and forward them to any Windows document processing platform.**
+**Receive print jobs from AS400, Linux, Unix, SAP, mainframe, and CUPS — and forward them to any Windows document processing platform.**
 
 [![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-blue.svg)](https://github.com/traviscitrine/AmazeLPD/releases)
@@ -16,7 +15,6 @@
 [**Download Trial**](#download) · [**Documentation**](docs/README.md) · [**Buy a Licence**](#pricing) · [**Getting Started**](#quick-start)
 
 ---
-
 </div>
 
 ## The Problem
@@ -27,7 +25,7 @@ Thousands of enterprises rely on LPD/LPR to route print jobs from **AS400 Output
 
 **AmazeLPD is the replacement.**
 
-It runs as a Windows service on port 515, receives any LPR print job, and forwards it to your document processing platform — keeping your existing infrastructure working without changes to the sending side.
+It runs as a Windows service, receives print jobs over **LPD/LPR (port 515)** or **IPP (port 631)**, and forwards them to your document processing platform — keeping your existing infrastructure working without changes to the sending side.
 
 ---
 
@@ -39,6 +37,7 @@ It runs as a Windows service on port 515, receives any LPR print job, and forwar
 | Linux / Unix systems printing to Windows | Drops in as a replacement LPD endpoint |
 | SAP or Oracle EBS legacy spool output | Accepts the print stream, routes it onward |
 | Mainframe LPD output | Receives and forwards without changes to the mainframe |
+| CUPS / macOS / modern Linux clients using IPP | Add AmazeLPD as a remote IPP printer — no LPR setup needed |
 | Microsoft LPD being removed from your Windows Server | Replaces it transparently — no changes to print clients |
 
 ---
@@ -47,6 +46,7 @@ It runs as a Windows service on port 515, receives any LPR print job, and forwar
 
 - **Windows Service** — installs and runs as a standard Windows service, starts automatically
 - **RFC 1179 compliant** — works with any LPR client including AS400, Linux, CUPS, and Windows lpr.exe
+- **IPP/1.1 support** — each queue is also exposed as a CUPS-compatible IPP printer (`ipp://server:631/printers/<QueueName>`), so Linux, macOS, and CUPS clients can add AmazeLPD as a remote printer directly
 - **Concurrent queue processing** — one worker thread per queue, all queues process simultaneously
 - **Per-queue configuration** — each queue has its own destination server, branch, and parameters
 - **Job history and logging** — full audit trail of every job received, processed, and delivered
@@ -60,6 +60,7 @@ It runs as a Windows service on port 515, receives any LPR print job, and forwar
 ## Quick Start
 
 **1. Download and install**
+
 ```
 Download the latest release → Run the installer → Service starts automatically
 ```
@@ -72,8 +73,16 @@ Open **AmazeLPD Manager** and click **New Queue**:
 - Package/Branch: your processing package name
 
 **3. Send a test job**
+
+Via LPR:
 ```cmd
 lpr -S <your-server-ip> -P MYQUEUE "C:\test.pdf"
+```
+
+Via IPP (CUPS / macOS / Linux):
+```bash
+lpadmin -p MYQUEUE -E -v ipp://<your-server-ip>:631/printers/MYQUEUE -m everywhere
+lp -d MYQUEUE test.pdf
 ```
 
 **4. Done.** The job appears in the manager with status Completed.
@@ -100,34 +109,38 @@ lpr -S <your-server-ip> -P MYQUEUE "C:\test.pdf"
 ## Architecture
 
 ```
-LPR Client (AS400 / Linux / Unix / SAP / Mainframe)
-         │
-         │  TCP port 515  (RFC 1179)
-         ▼
-┌─────────────────────┐
-│   AmazeLPD Service  │  Windows Service
-│                     │  Receives job → writes to disk
-│   Port 515 Listener │  Posts to processing queue
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│   Queue Processor   │  One thread per active queue
-│                     │  Builds XML envelope
-│   (per queue)       │  Forwards to destination
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│  Document Platform  │  Your Windows-based
-│  (any XML-capable   │  document processing
-│   system)           │  software
-└─────────────────────┘
+LPR Client                          IPP Client
+(AS400 / Linux / Unix /             (CUPS / macOS / Linux
+ SAP / Mainframe)                    via lpadmin / lp)
+         │                                   │
+         │  TCP port 515 (RFC 1179)          │  TCP port 631 (IPP/1.1)
+         ▼                                   ▼
+┌─────────────────────────────────────────────────────┐
+│                  AmazeLPD Service                    │  Windows Service
+│                                                       │
+│   Port 515 Listener        Port 631 Listener (IPP)   │  Both write to the
+│   (LPD/LPR)                 one endpoint per queue   │  same spool + queue
+└──────────────────────────┬──────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────┐
+│                   Queue Processor                    │  One thread per active queue
+│                                                       │  Builds XML envelope
+│                    (per queue)                       │  Forwards to destination
+└──────────────────────────┬──────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────┐
+│                  Document Platform                   │  Your Windows-based
+│                  (any XML-capable                    │  document processing
+│                   system)                            │  software
+└─────────────────────────────────────────────────────┘
 ```
 
 **Design highlights:**
 - Hot path has **zero database contact** — jobs hit disk in milliseconds
 - **Concurrent processing** — 100 queues process simultaneously, no queue blocks another
+- **Dual ingestion** — LPD/LPR and IPP share the same spooling pipeline, so every queue is reachable both ways with no extra configuration
 - **SQLite embedded database** — no SQL Server required, no external dependencies
 - Survives service restarts — pending jobs resume automatically
 
@@ -135,19 +148,22 @@ LPR Client (AS400 / Linux / Unix / SAP / Mainframe)
 
 ## Compatibility
 
-### Sending platforms (anything that speaks LPR)
+### Sending platforms
+
 | Platform | Method | Notes |
 |---|---|---|
-| IBM i / AS400 | OS/400 Output Queue (OUTQ) | Configure remote system + remote printer queue |
-| Linux / Unix | lpr command / CUPS | Standard LPR output |
+| IBM i / AS400 | OS/400 Output Queue (OUTQ) via LPR | Configure remote system + remote printer queue |
+| Linux / Unix | lpr command / CUPS (LPR or IPP) | Standard LPR output, or add as an IPP printer |
 | AIX | lpr / lpd | Native support |
 | SAP | Spool output via LPR | Configure SAP output device |
 | Oracle EBS | Concurrent Manager print | LPR output method |
 | Mainframe z/OS | JES spool LPR output | Standard configuration |
 | Windows | lpr.exe or print queue with LPR port | Built-in Windows lpr.exe |
 | HP-UX / Solaris | lpr | Native support |
+| macOS / modern Linux / CUPS | IPP (`ipp://server:631/printers/<QueueName>`) | Add as a remote IPP printer, no LPR setup required |
 
 ### Receiving platforms (what AmazeLPD forwards to)
+
 Any platform that accepts XML document input on a TCP connection. AmazeLPD wraps the job in a standard XML envelope with configurable parameters.
 
 ---
@@ -178,19 +194,21 @@ Download the latest release from the [**Releases**](https://github.com/traviscit
 - Windows Server 2016 / 2019 / 2022 or Windows 10 / 11
 - .NET Framework 4.8 (included in Windows Update)
 - 50MB disk space
-- Port 515 available
+- Port 515 available for LPD, port 631 available for IPP (both configurable)
 
 ---
 
 ## Installation
 
 ### Installer (recommended)
+
 1. Run `AmazeLPD_Setup_x64.msi`
 2. Follow the installation wizard
 3. The service installs and starts automatically
 4. Open **AmazeLPD Manager** from the Start menu
 
 ### Manual installation
+
 ```cmd
 cd "C:\Program Files\AmazeLPD\bin"
 C:\Windows\Microsoft.NET\Framework64\v4.0.30319\InstallUtil.exe AmazeLPD_Service.exe
@@ -205,6 +223,7 @@ sc start AmazeLPD_Service
 |---|---|---|---|
 | Lightweight Windows service | ✅ | ❌ Heavy print management suite | ✅ |
 | Per-queue destination routing | ✅ | ❌ | ❌ |
+| IPP support for CUPS/macOS/Linux | ✅ | ✅ | ❌ |
 | XML envelope with custom parameters | ✅ | ❌ | ❌ |
 | Job history and audit log | ✅ | ✅ | ❌ |
 | No SQL Server required | ✅ | ❌ | ✅ |
@@ -220,6 +239,9 @@ Yes — AmazeLPD is a standalone Windows service that does not depend on the Mic
 
 **Q: Do I need to change anything on the AS400 / sending side?**
 No. AmazeLPD receives standard LPR jobs. Your AS400 Output Queue, Linux lpr command, or any other LPR client continues working exactly as before — just point it at the AmazeLPD server IP.
+
+**Q: Can I print to AmazeLPD from a Mac or modern Linux box without setting up LPR?**
+Yes. Every queue is also exposed as an IPP printer at `ipp://<server>:631/printers/<QueueName>`. Add it with `lpadmin` (or via System Preferences → Printers on macOS) and print normally — it lands in the same spool and queue as LPR jobs.
 
 **Q: What happens to jobs if the destination server is unavailable?**
 Jobs are spooled to disk and held as Pending. When the destination becomes available, they are processed automatically. You can also pause and resume individual queues from the manager UI.
