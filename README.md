@@ -261,7 +261,7 @@ XML envelope with the job file base64-encoded inside. A legacy format is also su
 
 AmazeLPD is provided as-is under the terms of the [licence agreement](LICENSE). No formal support obligations are included.
 
-For pre-sales questions or licensing enquiries, open a [GitHub Issue](https://github.com/traviscitrine/AmazeLPD/issues) or contact via Gumroad.
+For pre-sales questions or licensing enquiries, open a [GitHub Issue](https://github.com/traviscitrine/AmazeLPD/issues).
 
 ---
 
@@ -269,7 +269,7 @@ For pre-sales questions or licensing enquiries, open a [GitHub Issue](https://gi
 
 AmazeLPD is proprietary software. See [LICENSE](LICENSE) for full terms.
 
-© 2026 Heath Citrine. All rights reserved.
+© 2026 Travis Citrine. All rights reserved.
 
 ---
 
